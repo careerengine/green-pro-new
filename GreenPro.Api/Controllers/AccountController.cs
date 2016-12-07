@@ -17,6 +17,12 @@ using GreenPro.Api.Models;
 using GreenPro.Api.Providers;
 using GreenPro.Api.Results;
 using Newtonsoft.Json.Linq;
+using System.Web.Http.Description;
+using GreenPro.Data;
+using System.Linq;
+using System.Data.Entity;
+using System.Data.Entity.Infrastructure;
+using System.Net;
 
 namespace GreenPro.Api.Controllers
 {
@@ -24,17 +30,61 @@ namespace GreenPro.Api.Controllers
     public class AccountController : ApiController
     {
         private AuthRepository _repo = null;
-
+        private GreenProDbEntities db = new GreenProDbEntities();
         public AccountController()
         {
             _repo = new AuthRepository();
         }
 
+
+        [Authorize]
+        [HttpGet]
+        [ResponseType(typeof(AspNetUser))]
+        public async Task<IHttpActionResult> GetUserDetails(string userID)
+        {
+
+            AspNetUser user = await db.AspNetUsers.FindAsync(userID);
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(user);
+        }
+
+        // PUT: api/CarUsers/5
+        [ResponseType(typeof(void))]
+        public async Task<IHttpActionResult> PutUserDetailsr(string id, AspNetUser userDetails)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (id != userDetails.Id)
+            {
+                return BadRequest();
+            }
+
+            db.Entry(userDetails).State = EntityState.Modified;
+
+            try
+            {
+                await db.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException ex)
+            {
+                return InternalServerError(ex);
+            }
+
+            return Ok(userDetails);
+        }
         // POST api/Account/Register
         [AllowAnonymous]
         [Route("Register")]
         public async Task<IHttpActionResult> Register(RegisterBindingModel userModel)
         {
+            userModel.UserName = userModel.Email;
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);

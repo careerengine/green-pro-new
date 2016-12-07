@@ -116,7 +116,7 @@ namespace GreenPro.Api.Controllers
                 }
             }
 
-            return StatusCode(HttpStatusCode.NoContent);
+            return Ok(carUser);
         }
 
         // POST: api/CarUsers
